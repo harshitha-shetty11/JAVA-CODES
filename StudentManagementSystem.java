@@ -1,0 +1,119 @@
+import java.util.*;
+
+class Student {
+    int sid;
+    String sname;
+    int sage;
+
+    Student(int sid, String sname, int sage) {
+        this.sid = sid;
+        this.sname = sname;
+        this.sage = sage;
+    }
+
+    void display() {
+        System.out.println("SID: " + sid + ", SName: " + sname + ", SAge: " + sage);
+    }
+}
+
+public class StudentManagementSystem {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        HashMap<Integer, Student> studentMap = new HashMap<>();
+        HashMap<Integer, String> attendanceMap = new HashMap<>();
+        ArrayList<Integer> studentIDs = new ArrayList<>();
+        int choice;
+
+        while (true) {
+            System.out.println("\nStudent Management System");
+            System.out.println("1. Add Student");
+            System.out.println("2. View all students");
+            System.out.println("3. Search student by ID");
+            System.out.println("4. Delete student by ID");
+            System.out.println("5. Mark Attendance");
+            System.out.println("6. View Attendance");
+            System.out.println("7. Exit");
+            System.out.print("Enter choice: ");
+            choice = sc.nextInt();
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter SID: ");
+                    int sid = sc.nextInt();
+                    sc.nextLine(); // consume newline
+                    System.out.print("Enter SName: ");
+                    String sname = sc.nextLine();
+                    System.out.print("Enter SAge: ");
+                    int sage = sc.nextInt();
+                    Student student = new Student(sid, sname, sage);
+                    studentMap.put(sid, student);
+                    studentIDs.add(sid);
+                    System.out.println("Student Enrolled Successfully");
+                    break;
+
+                case 2:
+                    System.out.println("\nList of Students:");
+                    for (int id : studentIDs) {
+                        studentMap.get(id).display();
+                    }
+                    break;
+
+                case 3:
+                    System.out.print("Enter student ID to search: ");
+                    int searchId = sc.nextInt();
+                    if (studentMap.containsKey(searchId)) {
+                        studentMap.get(searchId).display();
+                    } else {
+                        System.out.println("Student not found");
+                    }
+                    break;
+
+                case 4:
+                    System.out.print("Enter student ID to delete: ");
+                    int deleteId = sc.nextInt();
+                    if (studentMap.containsKey(deleteId)) {
+                        studentMap.remove(deleteId);
+                        attendanceMap.remove(deleteId);
+                        studentIDs.remove(Integer.valueOf(deleteId));
+                        System.out.println("Student deleted");
+                    } else {
+                        System.out.println("Student not found");
+                    }
+                    break;
+
+                case 5:
+                    System.out.println("\nMark Attendance (P/A):");
+                    for (int id : studentIDs) {
+                        Student s = studentMap.get(id);
+                        System.out.print("Student ID " + s.sid + " (" + s.sname + "): ");
+                        String status = sc.next();
+                        if (status.equalsIgnoreCase("P") || status.equalsIgnoreCase("A")) {
+                            attendanceMap.put(s.sid, status.toUpperCase());
+                        } else {
+                            System.out.println("Invalid input, marked as Absent");
+                            attendanceMap.put(s.sid, "A");
+                        }
+                    }
+                    break;
+
+                case 6:
+                    System.out.println("\nAttendance List:");
+                    for (int id : studentIDs) {
+                        Student s = studentMap.get(id);
+                        String status = attendanceMap.getOrDefault(id, "Not marked");
+                        System.out.println("ID: " + s.sid + ", Name: " + s.sname + ", Attendance: " + status);
+                    }
+                    break;
+
+                case 7:
+                    System.out.println("Exiting...");
+                    sc.close();
+                    System.exit(0);
+                    break;
+
+                default:
+                    System.out.println("Invalid choice, enter again.");
+            }
+        }
+    }
+}
