@@ -1,0 +1,78 @@
+import java.util.*;
+
+class Person {
+    String name;
+    Person left;  
+    Person right; 
+
+    Person(String n) {
+        name = n;
+        left = right = null;
+    }
+}
+
+class FamilyTree {
+    static Scanner sc = new Scanner(System.in); 
+    public static Person Tree(String relation) {
+        System.out.print("Enter name for " + relation + " (or type 'none' to skip): ");
+        String input = sc.nextLine();
+        
+        if (input.equalsIgnoreCase("none")) {
+            return null;
+        }
+
+        Person p = new Person(input);
+        p.left = Tree("left child of " + input);
+        p.right = Tree("right child of " + input);
+        return p; 
+    }
+
+    public static void printTree(Person root, String indent) {
+        if (root == null) {
+            return;
+        }
+        System.out.println(indent + root.name);
+        printTree(root.left, indent + "  ");
+        printTree(root.right, indent + "  ");
+    }
+	public static void inorder(Person root) {
+    if (root == null) {
+        return;
+    }
+    inorder(root.left);
+    System.out.print(root.name + " ");
+    inorder(root.right);
+}
+public static void preorder(Person root) {
+    if (root == null) {
+        return;
+    }
+	System.out.print(root.name + " ");
+    inorder(root.left);
+    inorder(root.right);
+}
+public static void postorder(Person root) {
+    if (root == null) {
+        return;
+    }
+    inorder(root.left);
+    inorder(root.right);
+	System.out.print(root.name + " ");
+}
+
+    public static void main(String[] args) {
+        System.out.println("Family tree");
+        Person root = Tree("root person"); 
+        System.out.println("\nFamily Tree Structure:");
+        printTree(root, " ");
+		System.out.println("\nInorder Traversal");
+		inorder(root);
+		System.out.println();
+		System.out.println("\nPreOrder Traversal");
+		preorder(root);
+		System.out.println();
+		System.out.println("\nPost OrderTraversal");
+		inorder(root);
+		System.out.println();		
+    }
+}
