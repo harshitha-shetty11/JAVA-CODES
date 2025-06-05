@@ -1,0 +1,63 @@
+import java.util.*;
+class TaskSchedule{
+    ArrayList<String> Task = new ArrayList<>();
+
+    public void enqueue(String value) {
+        Task.add(value);
+    }
+
+    public String dequeue() {
+        if (isEmpty()) {
+            System.out.println("No Tasks remain");
+            return null;
+        }
+        return Task.remove(0);
+    }
+
+    public String peek() {
+        if (isEmpty()) {
+            System.out.println("Task Queue is empty");
+            return null;
+        }
+        return Task.get(0);
+    }
+
+    public boolean isEmpty() {
+        return Task.isEmpty();
+    }
+
+    public void display() {
+        System.out.println("Tasks list: " + Task);
+    }
+
+    public static void main(String[] args) {
+        TaskSchedule t = new TaskSchedule();
+        Scanner sc = new Scanner(System.in);
+        System.out.println("How many tasks do you want to add?");
+        int n = sc.nextInt();
+        sc.nextLine();  
+
+        for (int i = 0; i < n; i++) {
+            System.out.print("Enter task: ");
+            String task = sc.nextLine();
+            t.enqueue(task);
+        }
+        while (!t.isEmpty()) {
+            String currentTask = t.peek();
+            System.out.println("Current task: " + currentTask);
+            System.out.print("Have the task is done? ");
+            String response = sc.nextLine().toLowerCase();
+
+            if (response.equals("y")) {
+                t.dequeue();
+            } else {
+                System.out.println("Task remains in queue.\n");
+            }
+			t.display();
+        }
+
+        System.out.println("All tasks are done!");
+
+        sc.close();
+    }
+}
