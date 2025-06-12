@@ -1,0 +1,511 @@
+import java.util.*;
+import java.time.LocalDateTime;
+
+public class RestaurantManagementSystem {
+    private static ArrayList<MenuItem> menu = new ArrayList<>();
+    private static HashMap<Integer, Customer> customers = new HashMap<>();
+    private static ArrayList<Table> tables = new ArrayList<>();
+    private static ArrayList<Order> orders = new ArrayList<>();
+    private static ArrayList<Feedback> feedbacks = new ArrayList<>();
+    private static int customerIdCounter = 1;
+    private static int orderIdCounter = 1;
+	private static boolean payment;
+
+    public static void main(String[] args) {
+        initializeData();
+        Scanner scanner = new Scanner(System.in);
+        
+        while (true) {
+            System.out.println("\n===== Restaurant Management System =====");
+            System.out.println("1. Customer Login");
+            System.out.println("2. Admin Login");
+            System.out.println("3. Exit");
+            System.out.print("Enter your choice: ");
+            
+            int choice = scanner.nextInt();
+            scanner.nextLine(); 
+            
+            switch (choice) {
+                case 1:
+                    customerMenu(scanner);
+                    break;
+                case 2:
+                    adminMenu(scanner);
+                    break;
+                case 3:
+					if(payment==true){
+                    System.out.println("Exiting system...");
+					}
+					else{
+						System.out.println("You cannot exit without payment:");
+						makePayment(scanner);
+					}
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    // Customer panel
+    private static void customerMenu(Scanner scanner) {
+        System.out.println("\n===== Customer Menu =====");
+		System.out.println("1. Registration");
+        System.out.println("2. View Menu");
+        System.out.println("3. Place Order");
+        System.out.println("4. Book Table");
+        System.out.println("5. Make Payment");
+        System.out.println("6. Provide Feedback");
+        System.out.println("7. Back to Main Menu");
+        System.out.print("Enter your choice: ");
+        
+        int choice = scanner.nextInt();
+        scanner.nextLine(); 
+        
+        switch (choice) {
+			case 1:
+				Registration();
+				break;
+            case 2:
+                viewMenu();
+                break;
+            case 3:
+                placeOrder(scanner);
+                break;
+            case 4:
+                bookTable(scanner);
+                break;
+            case 5:
+                makePayment(scanner);
+                break;
+            case 6:
+                provideFeedback(scanner);
+                break;
+            case 7:
+                return;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+        }
+    }
+
+    // Admin panel
+    private static void adminMenu(Scanner scanner) {
+        System.out.println("\n===== Admin Menu =====");
+        System.out.println("1. Update Customer Details");
+        System.out.println("2. View Customer Count");
+        System.out.println("3. Check Table Availability");
+        System.out.println("4. View Payments");
+        System.out.println("5. Back to Main Menu");
+        System.out.print("Enter your choice: ");
+        
+        int choice = scanner.nextInt();
+        scanner.nextLine(); 
+        
+        switch (choice) {
+            case 1:
+                updateCustomerDetails(scanner);
+                break;
+            case 2:
+                viewCustomerCount();
+                break;
+            case 3:
+                checkTableAvailability();
+                break;
+            case 4:
+                viewPayments();
+                break;
+            case 5:
+                return;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+        }
+    }
+	public static void Registration() {
+		Scanner scanner = new Scanner(System.in);
+		System.out.println("\n===== Customer Registration =====");
+		System.out.print("Enter your name: ");
+		String name = scanner.nextLine();
+		int customerId=customers.size()+1;
+		Customer newCustomer = new Customer(customerIdCounter, name);
+		customers.put(customerIdCounter, newCustomer);
+		
+		System.out.println("Registration successful! Your Customer ID is: " + customerIdCounter);
+		customerIdCounter++;
+	}
+
+
+    private static void viewMenu() {
+        System.out.println("\n===== Menu =====");
+        bubbleSortMenu();
+        for (MenuItem item : menu) {
+            System.out.println(item);
+        }
+    }
+
+    private static void placeOrder(Scanner scanner) {
+        System.out.println("\n===== Place Order =====");
+        System.out.print("Enter your customer ID: ");
+        int customerId = scanner.nextInt();
+        scanner.nextLine();
+        
+        if (!customers.containsKey(customerId)) {
+            System.out.println("Customer not found!");
+	
+			return;
+        }
+        
+        List<MenuItem> orderItems = new ArrayList<>();
+        while (true) {
+            viewMenu();
+            System.out.print("Enter item ID to add to order (0 to finish): ");
+            int itemId = scanner.nextInt();
+            scanner.nextLine();
+            
+            if (itemId == 0) break;
+            MenuItem item = binarySearchMenuItem(itemId);
+            if (item != null) {
+                orderItems.add(item);
+                System.out.println("Added: " + item.getName());
+            }
+        }
+        
+        if (!orderItems.isEmpty()) {
+            Order order = new Order(orderIdCounter++, customerId, orderItems, LocalDateTime.now(), false);
+            orders.add(order);
+            System.out.println("Order placed successfully! Order ID: " + order.getOrderId());
+        }
+    }
+
+    private static void bookTable(Scanner scanner) {
+        System.out.println("\n===== Book Table =====");
+        System.out.print("Enter your customer ID: ");
+        int customerId = scanner.nextInt();
+        scanner.nextLine();
+        
+        if (!customers.containsKey(customerId)) {
+            System.out.println("Customer not found!");
+            return;
+        }
+        
+        System.out.print("Enter number of people: ");
+        int people = scanner.nextInt();
+        scanner.nextLine();
+        
+        System.out.print("Enter booking time (YYYY-MM-DD HH:MM): ");
+        String timeStr = scanner.nextLine();
+        LocalDateTime bookingTime = LocalDateTime.parse(timeStr.replace(" ", "T"));
+        Table availableTable = null;
+        for (Table table : tables) {
+            if (table.getCapacity() >= people && table.isAvailable(bookingTime)) {
+                availableTable = table;
+                break;
+            }
+        }
+        
+        if (availableTable != null) {
+            availableTable.book(bookingTime);
+            Customer customer = customers.get(customerId);
+            customer.setTableNo(availableTable.getTableNumber());
+            customer.setBookingTime(bookingTime);
+            System.out.println("Table booked successfully! Table No: " + availableTable.getTableNumber());
+        } else {
+            System.out.println("No available tables for the requested time and party size.");
+        }
+    }
+
+    private static void makePayment(Scanner scanner) {
+        System.out.println("\n===== Make Payment =====");
+        System.out.print("Enter order ID: ");
+        int orderId = scanner.nextInt();
+        scanner.nextLine();
+        
+        Order order = findOrderById(orderId);
+        if (order == null) {
+            System.out.println("Order not found!");
+            return;
+        }
+        
+        if (order.isPaid()) {
+            System.out.println("Order already paid!");
+            return;
+        }
+        
+        double total = order.calculateTotal();
+        System.out.println("Total amount: " + total);
+        System.out.print("Enter payment amount: s");
+        double amount = scanner.nextDouble();
+        scanner.nextLine();
+        
+        if (amount >= total) {
+            order.setPaid(true);
+            System.out.println("Payment successful! Change: " + (amount - total));
+        } else {
+            System.out.println("Insufficient payment!");
+        }
+    }
+
+    private static void provideFeedback(Scanner scanner) {
+        System.out.println("\n===== Provide Feedback =====");
+        System.out.print("Enter your customer ID: ");
+        int customerId = scanner.nextInt();
+        scanner.nextLine();
+        
+        if (!customers.containsKey(customerId)) {
+            System.out.println("Customer not found!");
+            return;
+        }
+        
+        System.out.print("Enter your feedback: ");
+        String comment = scanner.nextLine();
+        System.out.print("Enter rating (1-5): ");
+        int rating = scanner.nextInt();
+        scanner.nextLine();
+        
+        feedbacks.add(new Feedback(customerId, comment, rating));
+        System.out.println("Thank you for your feedback!");
+    }
+
+   
+    private static void updateCustomerDetails(Scanner scanner) {
+        System.out.println("\n===== Update Customer Details =====");
+        System.out.print("Enter customer ID: ");
+        int customerId = scanner.nextInt();
+        scanner.nextLine();
+        
+        if (!customers.containsKey(customerId)) {
+            System.out.println("Customer not found!");
+            return;
+        }
+        
+        Customer customer = customers.get(customerId);
+        System.out.print("Enter new name (leave blank to keep current): ");
+        String name = scanner.nextLine();
+        if (!name.isEmpty()) {
+            customer.setName(name);
+        }
+        
+        System.out.print("Enter new table number (0 to keep current): ");
+        int tableNo = scanner.nextInt();
+        scanner.nextLine();
+        if (tableNo != 0) {
+            customer.setTableNo(tableNo);
+        }
+        
+        System.out.print("Enter new booking time (YYYY-MM-DD HH:MM or leave blank to keep current): ");
+        String timeStr = scanner.nextLine();
+        if (!timeStr.isEmpty()) {
+            LocalDateTime bookingTime = LocalDateTime.parse(timeStr.replace(" ", "T"));
+            customer.setBookingTime(bookingTime);
+        }
+        
+        System.out.println("Customer details updated successfully!");
+    }
+
+    private static void viewCustomerCount() {
+        System.out.println("\n===== Customer Count =====");
+        System.out.println("Total customers: " + customers.size());
+        
+        // Count customers with active bookings
+        long activeBookings = customers.values().stream()
+            .filter(c -> c.getBookingTime() != null && c.getBookingTime().isAfter(LocalDateTime.now()))
+            .count();
+        System.out.println("Customers with active bookings: " + activeBookings);
+    }
+
+    private static void checkTableAvailability() {
+        System.out.println("\n===== Table Availability =====");
+        System.out.print("Enter date and time to check (YYYY-MM-DD HH:MM): ");
+        Scanner scanner = new Scanner(System.in);
+        String timeStr = scanner.nextLine();
+        LocalDateTime time = LocalDateTime.parse(timeStr.replace(" ", "T"));
+        
+        System.out.println("Available tables at " + timeStr + ":");
+        for (Table table : tables) {
+            if (table.isAvailable(time)) {
+                System.out.println("Table " + table.getTableNumber() + " (Capacity: " + table.getCapacity() + ")");
+            }
+        }
+    }
+
+    private static void viewPayments() {
+        System.out.println("\n===== Payment Records =====");
+        double totalRevenue = 0;
+        for (Order order : orders) {
+            if (order.isPaid()) {
+                double orderTotal = order.calculateTotal();
+                System.out.println("Order ID: " + order.getOrderId() + 
+                                 ", Customer: " + customers.get(order.getCustomerId()).getName() +
+                                 ", Amount: " + orderTotal);
+                totalRevenue += orderTotal;
+            }
+        }
+        System.out.println("Total Revenue:" + totalRevenue);
+    }
+    private static void initializeData() {
+        menu.add(new MenuItem(1, "Meals", 179));
+        menu.add(new MenuItem(2, "Veg Biryani",199));
+        menu.add(new MenuItem(3, "Dum Biryani", 299));
+        menu.add(new MenuItem(4, "Gobi Manchuria", 79));
+        menu.add(new MenuItem(5, "Butterskotch Milkshake", 59));
+		menu.add(new MenuItem(6, "Rotis", 10));
+		menu.add(new MenuItem(7, "Bathua Raita", 169));
+		menu.add(new MenuItem(8, "Prawns Curry", 349));
+		menu.add(new MenuItem(9, "Water Bottle", 25));
+		
+        
+        tables.add(new Table(1, 4));
+        tables.add(new Table(2, 4));
+        tables.add(new Table(3, 6));
+        tables.add(new Table(4, 2));
+        tables.add(new Table(5, 8));
+        
+
+    }
+
+    private static void bubbleSortMenu() {
+        for (int i = 0; i < menu.size() - 1; i++) {
+            for (int j = 0; j < menu.size() - i - 1; j++) {
+                if (menu.get(j).getPrice() > menu.get(j + 1).getPrice()) {
+                    Collections.swap(menu, j, j + 1);
+                }
+            }
+        }
+    }
+
+    private static MenuItem binarySearchMenuItem(int itemId) {
+        int left = 0;
+        int right = menu.size() - 1;
+        
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            MenuItem midItem = menu.get(mid);
+            
+            if (midItem.getId() == itemId) {
+                return midItem;
+            } else if (midItem.getId() < itemId) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        return null;
+    }
+
+    private static Order findOrderById(int orderId) {
+        for (Order order : orders) {
+            if (order.getOrderId() == orderId) {
+                return order;
+            }
+        }
+        return null;
+    }
+}
+
+
+class MenuItem {
+    private int id;
+    private String name;
+    private double price;
+    
+    public MenuItem(int id, String name, double price) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+    }
+    
+    // Getters
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public double getPrice() { return price; }
+    
+    @Override
+    public String toString() {
+        return "ID: " + id + ", " + name + ", Price:" + price;
+    }
+}
+
+class Customer {
+    private int id;
+    private String name;
+    private Integer tableNo;
+    private LocalDateTime bookingTime;
+    
+    public Customer(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Integer getTableNo() { return tableNo; }
+    public void setTableNo(Integer tableNo) { this.tableNo = tableNo; }
+    public LocalDateTime getBookingTime() { return bookingTime; }
+    public void setBookingTime(LocalDateTime bookingTime) { this.bookingTime = bookingTime; }
+}
+
+class Table {
+    private int tableNumber;
+    private int capacity;
+    private ArrayList<LocalDateTime> bookedTimes;
+    
+    public Table(int tableNumber, int capacity) {
+        this.tableNumber = tableNumber;
+        this.capacity = capacity;
+        this.bookedTimes = new ArrayList<>();
+    }
+    
+    public int getTableNumber() { return tableNumber; }
+    public int getCapacity() { return capacity; }
+    
+    public boolean isAvailable(LocalDateTime time) {
+        for (LocalDateTime bookedTime : bookedTimes) {
+            if (time.isEqual(bookedTime) || 
+                (time.isAfter(bookedTime) && time.isBefore(bookedTime.plusHours(2)))) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    public void book(LocalDateTime time) {
+        bookedTimes.add(time);
+    }
+}
+
+class Order {
+    private int orderId;
+    private int customerId;
+    private List<MenuItem> items;
+    private LocalDateTime orderTime;
+    private boolean isPaid;
+    
+    public Order(int orderId, int customerId, List<MenuItem> items, LocalDateTime orderTime, boolean isPaid) {
+        this.orderId = orderId;
+        this.customerId = customerId;
+        this.items = items;
+        this.orderTime = orderTime;
+        this.isPaid = isPaid;
+    }
+    
+    // Getters and setters
+    public int getOrderId() { return orderId; }
+    public int getCustomerId() { return customerId; }
+    public boolean isPaid() { return isPaid; }
+    public void setPaid(boolean paid) { isPaid = paid; }
+    
+    public double calculateTotal() {
+        return items.stream().mapToDouble(MenuItem::getPrice).sum();
+    }
+}
+
+class Feedback {
+    private int customerId;
+    private String comment;
+    private int rating;
+    
+    public Feedback(int customerId, String comment, int rating) {
+        this.customerId = customerId;
+        this.comment = comment;
+        this.rating = rating;
+    }
+}
