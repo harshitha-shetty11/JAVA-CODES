@@ -10,15 +10,16 @@ public class RestaurantManagementSystem {
     private static int customerIdCounter = 1;
     private static int orderIdCounter = 1;
 	private static boolean payment;
-
+	public static double total=0;
+	
     public static void main(String[] args) {
         initializeData();
         Scanner scanner = new Scanner(System.in);
         
         while (true) {
             System.out.println("\n===== Restaurant Management System =====");
-            System.out.println("1. Customer Login");
-            System.out.println("2. Admin Login");
+            System.out.println("1. Customer ");
+            System.out.println("2. Admin ");
             System.out.println("3. Exit");
             System.out.print("Enter your choice: ");
             
@@ -38,7 +39,7 @@ public class RestaurantManagementSystem {
 					}
 					else{
 						System.out.println("You cannot exit without payment:");
-						makePayment(scanner);
+						makePayment(scanner,total);
 					}
                     return;
                 default:
@@ -76,7 +77,7 @@ public class RestaurantManagementSystem {
                 bookTable(scanner);
                 break;
             case 5:
-                makePayment(scanner);
+                makePayment(scanner,total);
                 break;
             case 6:
                 provideFeedback(scanner);
@@ -85,6 +86,7 @@ public class RestaurantManagementSystem {
                 return;
             default:
                 System.out.println("Invalid choice. Please try again.");
+				customerMenu(scanner);
         }
     }
 
@@ -118,6 +120,8 @@ public class RestaurantManagementSystem {
                 return;
             default:
                 System.out.println("Invalid choice. Please try again.");
+				adminMenu(scanner);
+				
         }
     }
 	public static void Registration() {
@@ -162,9 +166,14 @@ public class RestaurantManagementSystem {
             scanner.nextLine();
             
             if (itemId == 0) break;
+            //System.out.println(itemId);
+            // Binary search to find menu item
+			//bubbleSortMenu();
+			
             MenuItem item = binarySearchMenuItem(itemId);
             if (item != null) {
                 orderItems.add(item);
+				bubbleSortMenu();
                 System.out.println("Added: " + item.getName());
             }
         }
@@ -213,7 +222,7 @@ public class RestaurantManagementSystem {
         }
     }
 
-    private static void makePayment(Scanner scanner) {
+    private static void makePayment(Scanner scanner,double total) {
         System.out.println("\n===== Make Payment =====");
         System.out.print("Enter order ID: ");
         int orderId = scanner.nextInt();
@@ -230,7 +239,7 @@ public class RestaurantManagementSystem {
             return;
         }
         
-        double total = order.calculateTotal();
+        total = order.calculateTotal(total);
         System.out.println("Total amount: " + total);
         System.out.print("Enter payment amount: s");
         double amount = scanner.nextDouble();
@@ -239,8 +248,11 @@ public class RestaurantManagementSystem {
         if (amount >= total) {
             order.setPaid(true);
             System.out.println("Payment successful! Change: " + (amount - total));
-        } else {
+        } 
+		else if(amount < total) {
+			total=total-amount;
             System.out.println("Insufficient payment!");
+			makePayment(scanner,total);
         }
     }
 
@@ -332,10 +344,8 @@ public class RestaurantManagementSystem {
         double totalRevenue = 0;
         for (Order order : orders) {
             if (order.isPaid()) {
-                double orderTotal = order.calculateTotal();
-                System.out.println("Order ID: " + order.getOrderId() + 
-                                 ", Customer: " + customers.get(order.getCustomerId()).getName() +
-                                 ", Amount: " + orderTotal);
+                double orderTotal = order.calculateTotal(total);
+                System.out.println("Order ID: " + order.getOrderId() + ", Customer: " + customers.get(order.getCustomerId()).getName() +", Amount: " + orderTotal);
                 totalRevenue += orderTotal;
             }
         }
@@ -351,6 +361,7 @@ public class RestaurantManagementSystem {
 		menu.add(new MenuItem(7, "Bathua Raita", 169));
 		menu.add(new MenuItem(8, "Prawns Curry", 349));
 		menu.add(new MenuItem(9, "Water Bottle", 25));
+		menu.add(new MenuItem(10, "Egg Burj", 99));
 		
         
         tables.add(new Table(1, 4));
@@ -371,8 +382,20 @@ public class RestaurantManagementSystem {
             }
         }
     }
+	
+	private static void bubbleSortMenu1() {
+        for (int i = 0; i < menu.size() - 1; i++) {
+            for (int j = 0; j < menu.size() - i - 1; j++) {
+                if (menu.get(j).getId() > menu.get(j + 1).getId()) {
+                    Collections.swap(menu, j, j + 1);
+                }
+            }
+        }
+    }
+
 
     private static MenuItem binarySearchMenuItem(int itemId) {
+		bubbleSortMenu1();
         int left = 0;
         int right = menu.size() - 1;
         
@@ -493,8 +516,11 @@ class Order {
     public boolean isPaid() { return isPaid; }
     public void setPaid(boolean paid) { isPaid = paid; }
     
-    public double calculateTotal() {
-        return items.stream().mapToDouble(MenuItem::getPrice).sum();
+    public double calculateTotal(double total) {
+		if(total==0){
+			total=items.stream().mapToDouble(MenuItem::getPrice).sum();
+		}
+		return total;
     }
 }
 
