@@ -1,0 +1,94 @@
+import java.util.*;
+class TodoListApplication {
+    private static ArrayList<String> tasks = new ArrayList<>();
+    private static Scanner sc = new Scanner(System.in);
+
+    public static void main(String[] args) {
+        boolean running = true;
+        
+        while (running) {
+            displayMenu();
+            int choice = getMenuChoice();
+            
+            switch (choice) {
+                case 1:
+                    addTask();
+                    break;
+                case 2:
+                    viewTasks();
+                    break;
+                case 3:
+                    removeTask();
+                    break;
+                case 4:
+                    running = false;
+                    System.out.println("Exiting the application.");
+                    break;
+                default:
+                    System.out.println("Invalid choice.Try again.");
+            }
+        }
+        
+        sc.close();
+    }
+
+    private static void displayMenu() {
+        System.out.println("\n=== To-Do List Application ===");
+        System.out.println("1. Add a new task");
+        System.out.println("2. View all tasks");
+        System.out.println("3. Remove a task");
+        System.out.println("4. Exit");
+        System.out.print("Enter your choice: ");
+    }
+
+    private static int getMenuChoice() {
+        while (!sc.hasNextInt()) {
+            System.out.println("Please enter a valid number (1-4)");
+            sc.next(); 
+        }
+        return sc.nextInt();
+    }
+
+    private static void addTask() {
+        sc.nextLine(); 
+        System.out.print("Enter the task to add: ");
+        String task = sc.nextLine();
+        tasks.add(task);
+        System.out.println("Task added successfully!");
+    }
+
+    private static void viewTasks() {
+        if (tasks.isEmpty()) {
+            System.out.println("Your to-do list is empty!");
+            return;
+        }
+        
+        System.out.println("\n=== Your Tasks ===");
+        for (int i = 0; i < tasks.size(); i++) {
+            System.out.println((i + 1) + ". " + tasks.get(i));
+        }
+    }
+
+    private static void removeTask() {
+        viewTasks();
+        if (tasks.isEmpty()) {
+            return;
+        }
+        
+        System.out.print("Enter the task number to remove (or 0 to cancel): ");
+        int taskNumber = getMenuChoice();
+        
+        if (taskNumber == 0) {
+            System.out.println("Task removal cancelled.");
+            return;
+        }
+        
+        if (taskNumber < 1 || taskNumber > tasks.size()) {
+            System.out.println("Invalid task number!");
+            return;
+        }
+        
+        String removedTask = tasks.remove(taskNumber - 1);
+        System.out.println("Task '" + removedTask + "' removed successfully!");
+    }
+}
